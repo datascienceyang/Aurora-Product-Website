@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Aurora | 基于BCI算法的睡眠监测干预一体化助眠头环</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/2.0.0/iconify-icon.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a1a24;
+            --text-muted: #5a5a6a;
+            --btn-bg: rgba(255, 255, 255, 0.7);
+            --btn-border: rgba(255, 255, 255, 0.9);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }
+        body, html {
+            width: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f7f9fa;
+            min-height: 100vh;
+            height: auto;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* Fixed Background */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at top, #e6e9f0 0%, #f7f9fa 100%);
+        }
+        /* Hero Layout */
+        .hero-container {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6rem 5% 4rem;
+        }
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            gap: 4rem;
+            max-width: 1300px;
+            width: 100%;
+            z-index: 10;
+        }
+        /* Typography & Left Content */
+        .text-section {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .text-section h1 {
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            font-weight: 600;
+            color: var(--primary);
+            line-height: 1.05;
+            letter-spacing: -0.04em;
+            margin-bottom: 1.5rem;
+        }
+        .text-section p {
+            font-size: clamp(1.1rem, 1.5vw, 1.25rem);
+            color: var(--text-muted);
+            max-width: 520px;
+            line-height: 1.6;
+            margin-bottom: 2.5rem;
+            font-weight: 300;
+        }
+        /* CTA Button */
+        .cta-btn {
+            padding: 1rem 2.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--primary);
+            background: var(--btn-bg);
+            border: 1px solid var(--btn-border);
+            border-radius: 50px;
+            cursor: pointer;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.04), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cta-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+            transform: skewX(-20deg);
+            transition: 0.5s;
+        }
+        .cta-btn:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+        }
+        .cta-btn:hover::before {
+            left: 150%;
+        }
+        .btn-secondary {
+            padding: 1rem 2.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--primary);
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+        /* Right Side Product Showcase */
+        .card-section {
+            perspective: 1200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .card-floater {
+            animation: float 6s ease-in-out infinite;
+            will-change: transform;
+        }
+        .product-showcase {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.1), inset 0 2px 20px rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            transform-style: preserve-3d;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.1s linear;
+        }
+        .product-image {
+            width: 100%;
+            height: auto;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            object-fit: cover;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 2rem;
+            transform: translateZ(20px);
+        }
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .card-title-line {
+            width: 100px;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .card-hologram {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) translateZ(40px);
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            border: 2px dashed rgba(102, 126, 234, 0.4);
+            animation: spin 20s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card-hologram::after {
+            content: '';
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ffffff, rgba(224, 247, 250, 0.8), rgba(128, 216, 255, 0.2));
+            box-shadow: 0 0 40px rgba(128, 216, 255, 0.4);
+            animation: pulse 4s ease-in-out infinite alternate;
+        }
+        .card-footer {
+            transform: translateZ(20px);
+            margin-top: auto;
+        }
+        .card-line {
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(0, 0, 0, 0.06);
+            margin-bottom: 12px;
+        }
+        .card-line:nth-child(1) { width: 100%; }
+        .card-line:nth-child(2) { width: 70%; }
+        .card-line:nth-child(3) { width: 85%; }
+        .card-line:nth-child(4) { width: 60%; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        @keyframes spin {
+            100% { transform: translate(-50%, -50%) translateZ(40px) rotate(360deg); }
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            100% { transform: scale(1.1); opacity: 1; }
+        }
+        /* Section Common */
+        .section {
+            padding: 6rem 5%;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        .section-title {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        .section-title h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        .section-title p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        /* Glass Card */
+        .glass-panel{
+            background:rgba(255,255,255,0.4);
+            backdrop-filter:blur(24px);
+            -webkit-backdrop-filter:blur(24px);
+            border:1px solid rgba(255,255,255,0.6);
+            box-shadow:0 8px 32px rgba(0,0,0,0.05);
+            border-radius: 24px;
+            padding: 2rem;
+            transition: all 0.4s ease;
+        }
+        .glass-panel:hover{
+            background:rgba(255,255,255,0.5);
+            transform:translateY(-4px);
+            box-shadow:0 20px 40px rgba(0,0,0,0.08);
+        }
+        .float-anim{
+            animation:float 6s ease-in-out infinite;
+        }
+        .delay-1{animation-delay:1s;}
+        .delay-2{animation-delay:2s;}
+        .delay-3{animation-delay:3s;}
+        /* Grid */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 3rem;
+        }
+        .grid-5 {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+        }
+        /* Feature Card */
+        .feature-card {
+            text-align: center;
+        }
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: white;
+            font-size: 28px;
+        }
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+        }
+        .feature-card p {
+            color: var(--text-muted);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        /* Flow */
+        .flow-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .flow-item {
+            flex: 1;
+            text-align: center;
+        }
+        .flow-arrow {
+            color: #667eea;
+            font-size: 2rem;
+        }
+        /* Timeline */
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 3rem;
+        }
+        .timeline-item {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            top: 24px;
+            right: -50%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            z-index: 0;
+        }
+        .timeline-item:last-child::after {
+            display: none;
+        }
+        .timeline-dot {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: white;
+            position: relative;
+            z-index: 1;
+        }
+        .timeline-year {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        .timeline-text {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        /* Team Card */
+        .team-card {
+            text-align: center;
+        }
+        .team-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: white;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+        .team-card h4 {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+        .team-card p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        /* Back to Top */
+        #back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+        #back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        #back-to-top:hover {
+            transform: translateY(-4px);
+            background: white;
+        }
+        /* 环形盈利项布局样式 */
+        .profit-item {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: rotate(var(--angle)) translate(140px) rotate(calc(-1 * var(--angle)));
+            text-align: center;
+            width: 80px;
+            margin-left: -40px;
+            margin-top: -40px;
+            transition: all 0.3s ease;
+        }
+        .profit-item:hover {
+            transform: rotate(var(--angle)) translate(150px) rotate(calc(-1 * var(--angle)));
+        }
+        /* Responsive */
+        @media (max-width: 968px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 3rem;
+            }
+            .text-section {
+                align-items: center;
+                margin-top: 4rem;
+            }
+            .card-section {
+                margin-bottom: 4rem;
+            }
+            .grid-3, .grid-4, .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            .flow-container {
+                flex-direction: column;
+                gap: 2rem;
+            }
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+            .timeline {
+                flex-direction: column;
+                gap: 2rem;
+            }
+            .timeline-item::after {
+                display: none;
+            }
+        }
+        .shadow-soft-card{
+            box-shadow:
+            0 30px 80px -20px rgba(15,23,42,0.08),
+            0 10px 30px -15px rgba(15,23,42,0.05);
+        }
+    </style>
+</head>
+<body class="text-slate-900">
+    <div id="bg-canvas"></div>
+
+    <!-- Header Navigation -->
+    <header id="creative-header" class="fixed top-4 left-0 w-full z-50 px-4 sm:px-6 transition-all duration-300 pointer-events-none">
+        <div class="max-w-6xl mx-auto pointer-events-auto">
+            <div class="relative backdrop-blur-xl bg-white/70 border border-white/40 shadow-[0_8px_30px_rgba(0,0,0,0.04)] rounded-full px-2 py-2 pl-6 flex items-center justify-between transition-all duration-500 hover:bg-white/80 hover:shadow-[0_15px_40px_rgba(0,0,0,0.08)]">
+                <!-- Brand -->
+                <a href="#hero" class="flex items-center gap-2 group">
+                    <span class="font-medium text-slate-800 tracking-tight text-sm uppercase hidden sm:block">
+                        Aurora
+                    </span>
+                </a>
+                <!-- Desktop Nav -->
+                <nav class="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+                    <a href="#hero" class="px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-900 uppercase tracking-wider rounded-full hover:bg-white/60 transition-all">
+                        首页
+                    </a>
+                    <a href="#background" class="px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-900 uppercase tracking-wider rounded-full hover:bg-white/60 transition-all">
+                        项目背景
+                    </a>
+                    <a href="#product" class="px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-900 uppercase tracking-wider rounded-full hover:bg-white/60 transition-all">
+                        产品介绍
+                    </a>
+                    <a href="#tech" class="px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-900 uppercase tracking-wider rounded-full hover:bg-white/60 transition-all">
+                        核心技术
+                    </a>
+                    <a href="#market" class="px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-900 uppercase tracking-wider rounded-full hover:bg-white/60 transition-all">
+                        市场与合作
+                    </a>
+                    <a href="#team" class="px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-900 uppercase tracking-wider rounded-full hover:bg-white/60 transition-all">
+                        团队介绍
+                    </a>
+                    <a href="#plan" class="px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-900 uppercase tracking-wider rounded-full hover:bg-white/60 transition-all">
+                        发展规划
+                    </a>
+                </nav>
+                <!-- Right Actions -->
+                <div class="flex items-center gap-2">
+                    <a href="#contact" class="hidden sm:inline-flex items-center justify-center px-6 py-2.5 text-xs font-medium text-white uppercase tracking-widest bg-slate-900 rounded-full hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 hover:shadow-xl hover:shadow-slate-900/20 hover:-translate-y-0.5">
+                        联系我们
+                    </a>
+                    <!-- Mobile Toggle -->
+                    <button id="mobile-menu-btn" class="md:hidden w-10 h-10 flex items-center justify-center rounded-full text-slate-600 hover:bg-white/60 transition-colors focus:outline-none">
+                        <iconify-icon id="menu-icon" icon="mdi:menu" width="20" height="20"></iconify-icon>
+                        <iconify-icon id="close-icon" class="hidden" icon="mdi:close" width="20" height="20"></iconify-icon>
+                    </button>
+                </div>
+            </div>
+            <!-- Mobile Menu Dropdown -->
+            <div id="mobile-menu" class="absolute top-full left-0 w-full px-4 mt-3 origin-top transform scale-95 opacity-0 invisible transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
+                <div class="bg-white/80 backdrop-blur-2xl border border-white/60 rounded-[2rem] p-3 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.1)] flex flex-col gap-1">
+                    <a href="#hero" class="p-4 text-center text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-white/60 rounded-2xl transition-all">
+                        首页
+                    </a>
+                    <a href="#background" class="p-4 text-center text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-white/60 rounded-2xl transition-all">
+                        项目背景
+                    </a>
+                    <a href="#product" class="p-4 text-center text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-white/60 rounded-2xl transition-all">
+                        产品介绍
+                    </a>
+                    <a href="#tech" class="p-4 text-center text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-white/60 rounded-2xl transition-all">
+                        核心技术
+                    </a>
+                    <a href="#market" class="p-4 text-center text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-white/60 rounded-2xl transition-all">
+                        市场与合作
+                    </a>
+                    <a href="#team" class="p-4 text-center text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-white/60 rounded-2xl transition-all">
+                        团队介绍
+                    </a>
+                    <a href="#plan" class="p-4 text-center text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-white/60 rounded-2xl transition-all">
+                        发展规划
+                    </a>
+                    <div class="h-px bg-slate-200/50 mx-6 my-1"></div>
+                    <a href="#contact" class="p-4 text-center text-sm font-medium text-white bg-slate-900 rounded-2xl shadow-lg shadow-slate-900/10">
+                        联系我们
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Section 1: Hero -->
+    <section id="hero" class="hero-container">
+        <div class="content-wrapper">
+            <div class="text-section">
+                <h1 class="tracking-tight">
+                    Aurora
+                    <br>
+                    智能助眠头环
+                </h1>
+                <p>
+                    基于BCI算法的睡眠监测干预一体化助眠头环，真正实现「监测-分析-干预」全闭环，守护每一晚好眠。
+                </p>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-4 items-start">
+                    <a href="#product" class="cta-btn">
+                        了解产品
+                    </a>
+                    <a href="#contact" class="px-6 py-3 rounded-full text-sm font-medium text-slate-700 bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_10px_30px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.9)] hover:bg-white/60 hover:shadow-[0_15px_40px_rgba(0,0,0,0.08)] transition-all duration-300">
+                        商务合作
+                    </a>
+                </div>
+                <p class="mt-4 text-sm text-slate-500">
+                    “人工智能+”赛道 | 脑电织梦团队
+                </p>
+            </div>
+            <div class="card-section flex relative perspective-[1400px] items-center justify-center">
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[125%] h-[125%] bg-purple-400/10 rounded-full blur-[90px] -z-10 pointer-events-none">
+                </div>
+                <div class="card-floater">
+                    <div class="product-showcase">
+                        <img src="head picture.png" alt="Aurora 智能助眠头环" class="product-image">
+                        <div class="mt-4 text-center">
+                            <p class="text-slate-600 text-sm">Aurora 智能助眠头环</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: Background -->
+    <section id="background" class="section">
+        <div class="section-title">
+            <h2>项目背景与行业痛点</h2>
+            <p>响应国家战略，直面全民睡眠危机</p>
+        </div>
+        <div class="grid-2">
+            <div class="glass-panel float-anim">
+                <div class="flex items-start gap-4">
+                    <div class="feature-icon w-12 h-12 text-lg">
+                        <iconify-icon icon="mdi:flag-variant"></iconify-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">国家战略</h3>
+                        <p class="text-slate-600">响应《健康中国2030》与中国脑计划，睡眠作为生命的基石，是衡量国民健康最直观的"晴雨表"，是"脑计划"中最具普适性、最贴近民生的落地场景。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-panel float-anim delay-1">
+                <div class="flex items-start gap-4">
+                    <div class="feature-icon w-12 h-12 text-lg">
+                        <iconify-icon icon="mdi:chart-line"></iconify-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">社会现状</h3>
+                        <p class="text-slate-600">全国超3亿人有睡眠障碍，是全民级的健康刚需。2024年失眠率48.5%，超5.3亿成年人失眠；2025年失眠率59%，超8.3亿人失眠。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-8 glass-panel">
+            <h3 class="text-xl font-semibold mb-4 text-center">行业三大核心痛点</h3>
+            <div class="grid-3 mt-6">
+                <div class="text-center p-4">
+                    <iconify-icon icon="mdi:link-off" class="text-4xl text-purple-500 mb-3"></iconify-icon>
+                    <h4 class="font-medium mb-2">逻辑开环</h4>
+                    <p class="text-sm text-slate-600">监测端与干预端彼此孤立，无法形成闭环（只测不治）</p>
+                </div>
+                <div class="text-center p-4">
+                    <iconify-icon icon="mdi:target" class="text-4xl text-purple-500 mb-3"></iconify-icon>
+                    <h4 class="font-medium mb-2">缺乏金标准</h4>
+                    <p class="text-sm text-slate-600">仅靠体征推算睡眠状态，未触及脑电"金标准"（盲目干预）</p>
+                </div>
+                <div class="text-center p-4">
+                    <iconify-icon icon="mdi:flash" class="text-4xl text-purple-500 mb-3"></iconify-icon>
+                    <h4 class="font-medium mb-2">干预低效</h4>
+                    <p class="text-sm text-slate-600">普遍采取声、光、电的干预方式，有效性、舒适度不足（低效干预）</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: Product -->
+    <section id="product" class="section">
+        <div class="section-title">
+            <h2>产品介绍</h2>
+            <p>一款监测干预一体化的智能助眠头环</p>
+        </div>
+        <!-- Core Features -->
+        <div class="grid-3 mb-12">
+            <div class="glass-panel feature-card float-anim">
+                <div class="feature-icon">
+                    <!-- 修复：无效的 moon-and-stars 替换为有效图标 weather-night -->
+                    <iconify-icon icon="mdi:weather-night"></iconify-icon>
+                </div>
+                <h3>辅助入眠</h3>
+                <p>让用户告别辗转反侧的难眠之夜</p>
+            </div>
+            <div class="glass-panel feature-card float-anim delay-1">
+                <div class="feature-icon">
+                    <iconify-icon icon="mdi:bed"></iconify-icon>
+                </div>
+                <h3>深度安睡</h3>
+                <p>给用户一觉到天亮的深睡体验</p>
+            </div>
+            <div class="glass-panel feature-card float-anim delay-2">
+                <div class="feature-icon">
+                    <iconify-icon icon="mdi:account-check"></iconify-icon>
+                </div>
+                <h3>个性优化</h3>
+                <p>为用户定制个性化助眠方案</p>
+            </div>
+        </div>
+        <!-- Scenarios -->
+        <div class="glass-panel mb-12">
+            <h3 class="text-xl font-semibold mb-6 text-center">用户适用场景：从差旅小憩到居家深睡</h3>
+            <p class="text-center text-slate-600 mb-4">目标群体：入睡困难、浅睡易醒、高压人群</p>
+            <div class="grid-3">
+                <div class="text-center p-4">
+                    <iconify-icon icon="mdi:home" class="text-3xl text-purple-500 mb-3"></iconify-icon>
+                    <h4 class="font-medium">居家睡眠</h4>
+                </div>
+                <div class="text-center p-4">
+                    <iconify-icon icon="mdi:briefcase" class="text-3xl text-purple-500 mb-3"></iconify-icon>
+                    <h4 class="font-medium">办公午休</h4>
+                </div>
+                <div class="text-center p-4">
+                    <iconify-icon icon="mdi:airplane" class="text-3xl text-purple-500 mb-3"></iconify-icon>
+                    <h4 class="font-medium">出差通勤</h4>
+                </div>
+            </div>
+        </div>
+        <!-- Work Flow -->
+        <div class="glass-panel">
+            <h3 class="text-xl font-semibold mb-6 text-center">真正的"监测-分析-干预"闭环</h3>
+            <div class="flow-container">
+                <div class="flow-item">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center text-white text-2xl mx-auto mb-3">
+                        <iconify-icon icon="mdi:database"></iconify-icon>
+                    </div>
+                    <h4 class="font-medium mb-2">信号采集层</h4>
+                    <p class="text-sm text-slate-600">四通道脑电信号采集，精准捕捉前额与耳后脑电信号</p>
+                </div>
+                <div class="flow-arrow">
+                    <iconify-icon icon="mdi:arrow-right"></iconify-icon>
+                </div>
+                <div class="flow-item">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center text-white text-2xl mx-auto mb-3">
+                        <iconify-icon icon="mdi:cpu-64-bit"></iconify-icon>
+                    </div>
+                    <h4 class="font-medium mb-2">算法分析层</h4>
+                    <p class="text-sm text-slate-600">深度学习睡眠分期，DSP算法精准预判深睡慢波</p>
+                </div>
+                <div class="flow-arrow">
+                    <iconify-icon icon="mdi:arrow-right"></iconify-icon>
+                </div>
+                <div class="flow-item">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center text-white text-2xl mx-auto mb-3">
+                        <iconify-icon icon="mdi:magnet"></iconify-icon>
+                    </div>
+                    <h4 class="font-medium mb-2">智能干预层</h4>
+                    <p class="text-sm text-slate-600">靶向磁脉冲干预，自适应调节，无创神经调控</p>
+                </div>
+                <div class="flow-arrow">
+                    <iconify-icon icon="mdi:arrow-right"></iconify-icon>
+                </div>
+                <div class="flow-item">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center text-white text-2xl mx-auto mb-3">
+                        <iconify-icon icon="mdi:cloud"></iconify-icon>
+                    </div>
+                    <h4 class="font-medium mb-2">云端优化层</h4>
+                    <p class="text-sm text-slate-600">数字孪生平台，持续优化参数，实现个性化干预</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Tech -->
+    <section id="tech" class="section">
+        <div class="section-title">
+            <h2>四大核心技术</h2>
+            <p>构筑助眠硬壁垒，实现精准、舒适、有效三者兼得</p>
+        </div>
+        <div class="grid-4">
+            <div class="glass-panel feature-card float-anim">
+                <div class="feature-icon">
+                    <iconify-icon icon="mdi:water-drop"></iconify-icon>
+                </div>
+                <h3>监测端技术</h3>
+                <p>低阻抗、高黏附、高生物相容性水凝胶电极，精准、舒适、易用三者兼得</p>
+            </div>
+            <div class="glass-panel feature-card float-anim delay-1">
+                <div class="feature-icon">
+                    <iconify-icon icon="mdi:code-tags"></iconify-icon>
+                </div>
+                <h3>分析决策端</h3>
+                <p>CNN-LSTM混合神经网络，DSP慢波预测，毫秒级触发信号，支撑闭环干预</p>
+            </div>
+            <div class="glass-panel feature-card float-anim delay-2">
+                <div class="feature-icon">
+                    <iconify-icon icon="mdi:magnet"></iconify-icon>
+                </div>
+                <h3>干预端技术</h3>
+                <p>超构材料介导的磁脉冲波，突破磁场衰减瓶颈，靶向无创神经调控</p>
+            </div>
+            <div class="glass-panel feature-card float-anim delay-3">
+                <div class="feature-icon">
+                    <!-- 修复：无效的 cloud-compute 替换为 cloud-sync 表示云端同步/迭代 -->
+                    <iconify-icon icon="mdi:cloud-sync"></iconify-icon>
+                </div>
+                <h3>云端技术</h3>
+                <p>数字孪生大脑平台，构建虚拟脑模型，持续迭代，实现"千人千面"精准干预</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 5: Market -->
+    <section id="market" class="section">
+        <div class="section-title">
+            <h2>市场与商业模式</h2>
+            <p>千亿级刚需市场，携手合作伙伴共掘蓝海</p>
+        </div>
+        <div class="grid-2 mb-8">
+            <div class="glass-panel">
+                <div class="flex items-start gap-4">
+                    <div class="feature-icon w-12 h-12 text-lg">
+                        <iconify-icon icon="mdi:trending-up"></iconify-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">市场空间</h3>
+                        <p class="text-slate-600">2025年我国睡眠经济整体市场规模已突破万亿，睡眠健康进入精准监测与主动干预时代，脑电级精准监测与智能干预市场空缺明显。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-panel">
+                <div class="flex items-start gap-4">
+                    <div class="feature-icon w-12 h-12 text-lg">
+                        <iconify-icon icon="mdi:account-group"></iconify-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">运营逻辑</h3>
+                        <p class="text-slate-600">B端先行，C端验证，双端协同。不和传统巨头正面拼渠道，而是用核心技术切入其产品升级链条。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="glass-panel mb-8">
+            <h3 class="text-xl font-semibold mb-6 text-center">多元盈利模式</h3>
+            <p class="text-center text-slate-600 mb-4">从"卖产品"走向"产品+技术+服务"，一次性销售+持续服务并行</p>
+            
+            <!-- 环形盈利模式布局 -->
+            <div class="relative w-full max-w-md mx-auto h-80 hidden md:block">
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center text-white text-3xl z-10">
+                    <iconify-icon icon="mdi:brain"></iconify-icon>
+                </div>
+                
+                <div class="profit-item" style="--angle: 0deg;">
+                    <div class="w-12 h-12 rounded-full bg-white/80 backdrop-blur shadow-lg flex items-center justify-center mx-auto mb-2">
+                        <iconify-icon icon="mdi:cube" class="text-xl text-purple-500"></iconify-icon>
+                    </div>
+                    <p class="text-sm font-medium">头环销售收入</p>
+                </div>
+                <div class="profit-item" style="--angle: 72deg;">
+                    <div class="w-12 h-12 rounded-full bg-white/80 backdrop-blur shadow-lg flex items-center justify-center mx-auto mb-2">
+                        <iconify-icon icon="mdi:chip" class="text-xl text-purple-500"></iconify-icon>
+                    </div>
+                    <p class="text-sm font-medium">模组供货收入</p>
+                </div>
+                <div class="profit-item" style="--angle: 144deg;">
+                    <div class="w-12 h-12 rounded-full bg-white/80 backdrop-blur shadow-lg flex items-center justify-center mx-auto mb-2">
+                        <iconify-icon icon="mdi:key" class="text-xl text-purple-500"></iconify-icon>
+                    </div>
+                    <p class="text-sm font-medium">技术授权收入</p>
+                </div>
+                <div class="profit-item" style="--angle: 216deg;">
+                    <div class="w-12 h-12 rounded-full bg-white/80 backdrop-blur shadow-lg flex items-center justify-center mx-auto mb-2">
+                        <iconify-icon icon="mdi:handshake" class="text-xl text-purple-500"></iconify-icon>
+                    </div>
+                    <p class="text-sm font-medium">联合开发服务</p>
+                </div>
+                <div class="profit-item" style="--angle: 288deg;">
+                    <div class="w-12 h-12 rounded-full bg-white/80 backdrop-blur shadow-lg flex items-center justify-center mx-auto mb-2">
+                        <iconify-icon icon="mdi:refresh" class="text-xl text-purple-500"></iconify-icon>
+                    </div>
+                    <p class="text-sm font-medium">算法升级服务</p>
+                </div>
+            </div>
+            
+            <!-- 移动端 fallback 布局 -->
+            <div class="grid-5 md:hidden">
+                <div class="text-center p-3">
+                    <div class="w-10 h-10 rounded-full bg-white/80 shadow flex items-center justify-center mx-auto mb-2">
+                        <iconify-icon icon="mdi:cube" class="text-lg text-purple-500"></iconify-icon>
+                    </div>
+                    <p class="text-xs">头环销售</p>
+                </div>
+                <div class="text-center p-3">
+                    <div class="w-10 h-10 rounded-full bg-white/80 shadow flex items-center justify-center mx-auto mb-2">
+                        <iconify-icon icon="mdi:chip" class="text-lg text-purple-500"></iconify-icon>
+                    </div>
+                    <p class="text-xs">模组供货</p>
+                </div>
+                <div class="text-center p-3">
+                    <div class="w-10 h-10 rounded-full bg-white/80 shadow flex items-center justify-center mx-auto mb-2">
+                        <iconify-icon icon="mdi:key" class="text-lg text-purple-500"></iconify-icon>
+                    </div>
+                    <p class="text-xs">技术授权</p>
+                </div>
+                <div class="text-center p-3">
+                    <div class="w-10 h-10 rounded-full bg-white/80 shadow flex items-center justify-center mx-auto mb-2">
+                        <iconify-icon icon="mdi:handshake" class="text-lg text-purple-500"></iconify-icon>
+                    </div>
+                    <p class="text-xs">联合开发</p>
+                </div>
+                <div class="text-center p-3">
+                    <div class="w-10 h-10 rounded-full bg-white/80 shadow flex items-center justify-center mx-auto mb-2">
+                        <iconify-icon icon="mdi:refresh" class="text-lg text-purple-500"></iconify-icon>
+                    </div>
+                    <p class="text-xs">算法升级</p>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-6 border-t border-slate-200">
+                <h4 class="font-medium mb-4 text-center">合作模式与优势</h4>
+                <p class="text-center text-slate-600 text-sm">
+                    技术授权+模组供应+数据能力支持，合作方无需从零研发，显著缩短产品升级周期，低成本实现差异化
+                </p>
+            </div>
+        </div>
+        <div class="glass-panel">
+            <h3 class="text-xl font-semibold mb-6 text-center">目标用户画像</h3>
+            <div class="grid-2">
+                <div>
+                    <h4 class="font-medium mb-3 text-center">B端客户（优先产业落地）</h4>
+                    <ul class="space-y-2 text-slate-600">
+                        <li class="flex items-center gap-2"><iconify-icon icon="mdi:check-circle" class="text-purple-500"></iconify-icon> 睡眠家居企业</li>
+                        <li class="flex items-center gap-2"><iconify-icon icon="mdi:check-circle" class="text-purple-500"></iconify-icon> 智能健康设备企业</li>
+                        <li class="flex items-center gap-2"><iconify-icon icon="mdi:check-circle" class="text-purple-500"></iconify-icon> 康养机构与睡眠医学机构</li>
+                        <li class="flex items-center gap-2"><iconify-icon icon="mdi:check-circle" class="text-purple-500"></iconify-icon> 科研实验室与高校团队</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-medium mb-3 text-center">C端用户（产品验证入口）</h4>
+                    <ul class="space-y-2 text-slate-600">
+                        <li class="flex items-center gap-2"><iconify-icon icon="mdi:check-circle" class="text-purple-500"></iconify-icon> 职场高压人群</li>
+                        <li class="flex items-center gap-2"><iconify-icon icon="mdi:check-circle" class="text-purple-500"></iconify-icon> 睡眠障碍与浅睡人群</li>
+                        <li class="flex items-center gap-2"><iconify-icon icon="mdi:check-circle" class="text-purple-500"></iconify-icon> 作息不规律学生群体</li>
+                        <li class="flex items-center gap-2"><iconify-icon icon="mdi:check-circle" class="text-purple-500"></iconify-icon> 长期差旅/跨时区工作人群</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 6: Team -->
+    <section id="team" class="section">
+        <div class="section-title">
+            <h2>团队力量</h2>
+            <p>复旦顶尖跨学科团队，权威学术背书</p>
+        </div>
+        <div class="grid-4">
+            <!-- 第一行：王老师和韦银川 -->
+            <div class="glass-panel team-card float-anim md:col-span-2">
+                <h3 class="text-xl font-semibold mb-2">项目导师：王晶</h3>
+                <p class="text-slate-800">大数据学院老师，复旦大学类脑智能科学与技术研究院青年副研究员，国内可穿戴脑机接口与神经数字疗法领域的青年领军学者。为本项目提供核心的技术指导、方案优化，对接临床测试资源，把控科研与产品化的合规性，提供核心背书与技术支撑。</p>
+            </div>
+            <div class="glass-panel team-card float-anim">
+                <h4>韦银川</h4>
+                <p>团队队长，项目协调</p>
+            </div>
+            <div class="glass-panel team-card float-anim delay-2">
+                <h4>许露丹</h4>
+                <p>算法和软件开发</p>
+            </div>
+            <div class="glass-panel team-card float-anim delay-1">
+                <h4>杨语哲</h4>
+                <p>算法和软件开发</p>
+            </div>
+            <div class="glass-panel team-card float-anim delay-3">
+                <h4>刘臻</h4>
+                <p>算法和软件开发</p>
+            </div>
+            <div class="glass-panel team-card float-anim delay-3">
+                <h4>徐嘉翌</h4>
+                <p>嵌入式工程</p>
+            </div>
+            <div class="glass-panel team-card float-anim">
+                <h4>周琪翔</h4>
+                <p>宣发</p>
+            </div>
+            
+            <!-- 第三行 -->
+            <div class="glass-panel team-card float-anim delay-1">
+                <h4>游蕊阳</h4>
+                <p>宣发</p>
+            </div>
+            <div class="glass-panel team-card float-anim delay-2">
+                <h4>凌雯静</h4>
+                <p>宣发</p>
+            </div>
+            <div class="glass-panel team-card float-anim delay-3">
+                <h4>陈怡辛</h4>
+                <p>商业策划</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 7: Plan -->
+    <section id="plan" class="section">
+        <div class="section-title">
+            <h2>发展路线图</h2>
+            <p>从产品验证到平台化增长，稳步推进产业化落地</p>
+        </div>
+        <div class="glass-panel">
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot">
+                        <iconify-icon icon="mdi:flask"></iconify-icon>
+                    </div>
+                    <div class="timeline-year">2026-2027</div>
+                    <div class="timeline-text">
+                        完成样机研发与测试<br>
+                        建立监测干预闭环<br>
+                        小规模试点应用
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot">
+                        <iconify-icon icon="mdi:test-tube"></iconify-icon>
+                    </div>
+                    <div class="timeline-year">2027-2028</div>
+                    <div class="timeline-text">
+                        扩大合作规模<br>
+                        完善数据平台服务<br>
+                        产业化复制落地
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot">
+                        <iconify-icon icon="mdi:rocket"></iconify-icon>
+                    </div>
+                    <div class="timeline-year">2028+</div>
+                    <div class="timeline-text">
+                        算法升级与数据服务<br>
+                        持续变现<br>
+                        平台化增长
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 8: Contact -->
+    <section id="contact" class="section">
+        <div class="section-title">
+            <h2>联系我们</h2>
+            <p>Aurora，守护每一晚好眠</p>
+        </div>
+        <div class="glass-panel text-center max-w-2xl mx-auto">
+            <p class="text-slate-600 mb-6">
+                让每一次睡眠都成为大脑的精准修复之旅，期待与您携手，共掘万亿睡眠经济蓝海
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="mailto:contact@aurora.sleep" class="cta-btn">
+                    <iconify-icon icon="mdi:email" class="mr-2"></iconify-icon>
+                    发送邮件
+                </a>
+                <a href="#hero" class="btn-secondary">
+                    返回顶部
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 px-5 border-t border-slate-200/50">
+        <div class="max-w-6xl mx-auto text-center">
+            <p class="text-slate-500 text-sm">
+                ©2026 脑电织梦团队 版权所有 | Aurora，守护每一晚好眠
+            </p>
+            <div class="mt-4 flex flex-wrap justify-center gap-4 text-xs text-slate-500">
+                <a href="#hero" class="hover:text-slate-700">首页</a>
+                <a href="#background" class="hover:text-slate-700">项目背景</a>
+                <a href="#product" class="hover:text-slate-700">产品介绍</a>
+                <a href="#tech" class="hover:text-slate-700">核心技术</a>
+                <a href="#market" class="hover:text-slate-700">市场与合作</a>
+                <a href="#team" class="hover:text-slate-700">团队介绍</a>
+                <a href="#plan" class="hover:text-slate-700">发展规划</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top -->
+    <button id="back-to-top">
+        <iconify-icon icon="mdi:arrow-up" width="20" height="20"></iconify-icon>
+    </button>
+
+    <script>
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const menuIcon = document.getElementById('menu-icon');
+        const closeIcon = document.getElementById('close-icon');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            if (mobileMenu.classList.contains('invisible')) {
+                mobileMenu.classList.remove('opacity-0', 'invisible', 'scale-95');
+                mobileMenu.classList.add('opacity-100', 'visible', 'scale-100');
+                menuIcon.classList.add('hidden');
+                closeIcon.classList.remove('hidden');
+            } else {
+                mobileMenu.classList.add('opacity-0', 'invisible', 'scale-95');
+                mobileMenu.classList.remove('opacity-100', 'visible', 'scale-100');
+                menuIcon.classList.remove('hidden');
+                closeIcon.classList.add('hidden');
+            }
+        });
+
+        // Close mobile menu when clicking a link
+        document.querySelectorAll('#mobile-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('opacity-0', 'invisible', 'scale-95');
+                mobileMenu.classList.remove('opacity-100', 'visible', 'scale-100');
+                menuIcon.classList.remove('hidden');
+                closeIcon.classList.add('hidden');
+            });
+        });
+
+        // Back to Top
+        const backToTop = document.getElementById('back-to-top');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Header scroll effect
+        const header = document.getElementById('creative-header');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                header.classList.add('shadow-lg');
+            } else {
+                header.classList.remove('shadow-lg');
+            }
+        });
+    </script>
+</body>
+</html>
